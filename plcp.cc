@@ -168,14 +168,13 @@ int main( int argc, char **argv )
 		fprintf( stderr, " Error: k is too large!\n");
 		return ( 1 );
 	}
+
+	k_mappability( seq, sw, PLCP, P, SA, LCP  );
+
 	for(int i =0; i<l; i++)
 	{
-		if( PLCP[i] >= sw . m )
-			k_mappability( i, seq, sw, PLCP, P, SA, LCP  );
-		else 
-		{
-			short_plcp( i, alphabet, seq, sw, PLCP, P, SA, LCP, invSA);
-		}		
+		if( PLCP[i] < sw . m )
+			short_plcp( i, alphabet, seq, sw, PLCP, P, SA, LCP, invSA);		
 	}
 
 	double end = gettime();
