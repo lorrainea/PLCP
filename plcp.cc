@@ -27,15 +27,7 @@
 #include <math.h>
 #include "short.h"
 #include "plcp.h"
-#ifdef _USE_64
-#include <divsufsort64.h>                                         // include header for suffix sort
-#endif
 
-#ifdef _USE_32
-#include <divsufsort.h>                                           // include header for suffix sort
-#endif
-
-#include <sdsl/bit_vectors.hpp>	
 using namespace std;
 
 int main( int argc, char **argv )
@@ -146,89 +138,26 @@ int main( int argc, char **argv )
 		fprintf( stderr, " Error: file close error!\n");
 		return ( 1 );
 	}
-	
-	
 
-	//cout<<x<<endl;
-	INT * SA;
-	INT * LCP;
-	INT * invSA;
 	INT l = seq_len;
 
-        /* Compute the suffix plcp */
-        SA = ( INT * ) malloc( ( l ) * sizeof( INT ) );
-        if( ( SA == NULL) )
-        {
-                fprintf(stderr, " Error: Cannot allocate memory for SA.\n" );
-                return ( 0 );
-        }
+	INT * SA = ( INT * ) malloc( ( l ) * sizeof( INT ) );
+	INT * LCP = ( INT * ) calloc  ( l, sizeof( INT ) );
+	INT * invSA = ( INT * ) calloc( l , sizeof( INT ) );
+	
 
-	#ifdef _USE_64
-        if( divsufsort64( seq, SA, l ) != 0 )
-        {
-                fprintf(stderr, " Error: SA computation failed.\n" );
-                exit( EXIT_FAILURE );
-        }
-	#endif
+	compute_SA( seq, l, SA );
+	compute_invSA( seq, l, SA, invSA );
+	compute_LCP( seq, l, invSA, SA, LCP );
 
-	#ifdef _USE_32
-        if( divsufsort( seq, SA,  l ) != 0 )
-        {
-                fprintf(stderr, " Error: SA computation failed.\n" );
-                exit( EXIT_FAILURE );
-        }
-	#endif
 
-        /* Compute the inverse SA plcp */
-        invSA = ( INT * ) calloc( l , sizeof( INT ) );
-        if( ( invSA == NULL) )
-        {
-                fprintf(stderr, " Error: Cannot allocate memory for invSA.\n" );
-                return ( 0 );
-        }
-
-        for ( INT i = 0; i < l; i ++ )
-        {
-                invSA [SA[i]] = i;
-        }
-
-	LCP = ( INT * ) calloc  ( l, sizeof( INT ) );
-        if( ( LCP == NULL) )
-        {
-                fprintf(stderr, " Error: Cannot allocate memory for LCP.\n" );
-                return ( 0 );
-        }
-
-        /* Compute the LCP plcp */
-        if( LCParray( seq, l, SA, invSA, LCP ) != 1 )
-        {
-                fprintf(stderr, " Error: LCP computation failed.\n" );
-                exit( EXIT_FAILURE );
-        }
-
-	//cout<<"SA"<<endl;
 	unsigned int * PLCP = ( unsigned int * ) calloc( ( seq_len + 1 ) , sizeof( unsigned int ) );
 	PLCP[ seq_len ] = '\0';
 
 	unsigned int * P = ( unsigned int * ) calloc( ( seq_len + 1 ) , sizeof( unsigned int ) );
 	P[ seq_len ] = '\0';
 
-	for(int i =0; i<l; i++)
-	{
-		if( invSA[i]+1 < l )
-		{
-			PLCP[i] = max( LCP[invSA[i]], LCP[invSA[i]+1]);
-	
-			if( PLCP[i] == LCP[invSA[i]]  )
-				P[i] = SA[invSA[i]-1];
-			else P[i] = SA[invSA[i]+1];
-		}
-		else 
-		{
-			PLCP[i] =  LCP[invSA[i]];
-			P[i] = SA[invSA[i]-1];
-		}
-	}
+	populate_PLCP( seq, l, SA, invSA, LCP, PLCP, P );
 
 	int alph_len = 5;
 	
