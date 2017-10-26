@@ -63,7 +63,7 @@ unsigned int k_mappability( int i, unsigned char * x, struct TSwitch  sw, unsign
 	////cout<<"invsai"<<SA[i] <<" "<<"invsaj" <<SA[i-j]<<" lcp "<< range_min_query( i, j,  LCP, x )<<endl;
 	////cout<<" block length "<<block_length<<endl;
 
-	int rmq = range_min_query( i, j,  LCP, x );
+	int rmq = LCP [ i ];
 	while ( rmq >= block_length && i-j >= 0 )
 	{
 		if( SA[i-j] % block_length == 0  || SA[i] % block_length == 0 )
@@ -253,16 +253,3 @@ unsigned int k_mappability( int i, unsigned char * x, struct TSwitch  sw, unsign
 		
 return 1;
 }
-
-unsigned int range_min_query( int i, int j, INT * LCP, unsigned char * x )
-{
-	int min_lcp = strlen( (char*) x );
-	for(int k =i-j+1; k<=i; k++)
-	{
-		if( LCP[ k ] < min_lcp )
-			min_lcp = LCP[ k ];
-	}
-
-return min_lcp;
-}
-
