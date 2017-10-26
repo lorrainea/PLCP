@@ -27,8 +27,6 @@ typedef int64_t INT;
 typedef int32_t INT;
 #endif
 
-unsigned int range_min_query( int i, int j, INT * LCP, unsigned char * x );
-
 unsigned int LCParray( unsigned char *text, INT n, INT * SA, INT * ISA, INT * LCP );
 
 unsigned int k_mappability( int i, unsigned char * x, struct TSwitch  sw, unsigned int * PLCP, unsigned int * P, INT * SA, INT * LCP );
