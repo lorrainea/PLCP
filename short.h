@@ -29,6 +29,16 @@ typedef int32_t INT;
 
 unsigned int LCParray( unsigned char *text, INT n, INT * SA, INT * ISA, INT * LCP );
 
+unsigned int compute_SA( unsigned char *text, INT n, INT * SA );
+
+unsigned int compute_invSA( unsigned char *text, INT n, INT * SA, INT * invSA );
+
+unsigned int compute_LCP( unsigned char *text, INT n, INT * SA, INT * invSA, INT * LCP );
+
+unsigned int populate_PLCP( unsigned char *text, int l, INT * SA, INT * invSA, INT * LCP, unsigned int * PLCP, unsigned int * P );
+
+unsigned int LCParray( unsigned char *text, INT n, INT * SA, INT * ISA, INT * LCP );
+
 unsigned int k_mappability( int i, unsigned char * x, struct TSwitch  sw, unsigned int * PLCP, unsigned int * P, INT * SA, INT * LCP );
 
 unsigned int short_plcp( int i, char * alphabet, unsigned char * x, struct TSwitch  sw, unsigned int * PLCP, unsigned int * P, INT * SA, INT * LCP, INT * invSA);

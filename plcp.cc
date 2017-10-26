@@ -148,7 +148,7 @@ int main( int argc, char **argv )
 
 	compute_SA( seq, l, SA );
 	compute_invSA( seq, l, SA, invSA );
-	compute_LCP( seq, l, invSA, SA, LCP );
+	compute_LCP( seq, l, SA, invSA, LCP );
 
 
 	unsigned int * PLCP = ( unsigned int * ) calloc( ( seq_len + 1 ) , sizeof( unsigned int ) );
