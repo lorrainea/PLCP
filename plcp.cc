@@ -159,7 +159,7 @@ int main( int argc, char **argv )
 
 	populate_PLCP( seq, l, SA, invSA, LCP, PLCP, P );
 
-	int alph_len = 5;
+	int alph_len = 4;
 	
 	sw . m =  ceil( (sw.k+2) * ( log(l)/ log(alph_len) ) );
 

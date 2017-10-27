@@ -19,7 +19,7 @@
 
 #define ALLOC_SIZE              1048576
 
-#define DNA                     "ACGTN"                        
+#define DNA                     "ACGT"                        
 #define PROT                    "ARNDCQEGHILKMFPSTWYVOUBZJX*"     
 #define MAX2(a,b) ((a) > (b)) ? (a) : (b)
 #define MIN2(a,b) ((a) < (b)) ? (a) : (b)
