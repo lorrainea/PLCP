@@ -25,7 +25,6 @@
 #include <string>
 #include <sys/time.h>
 #include <math.h>
-#include "short.h"
 #include "plcp.h"
 #include <omp.h>
 
