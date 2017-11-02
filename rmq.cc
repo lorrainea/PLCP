@@ -33,28 +33,3 @@ INT rmq(INT *m, INT *v, INT n, INT i, INT j) {
   INT b = m[(j - shift + 1) * lgn + k];  
   return v[a]>v[b]?b:a;
 }
-
-#if 0
-
-#include <stdlib.h>
-
-#include <assert.h>
-
-INT main() {
-  INT a[] = {2, 1, 1, 4, 0, 5, 3, -1, 3, 3, 2};
-  INT n = 10, lgn = flog2(n);
-
-  INT *m = malloc(sizeof(INT)*n*lgn);
-  rmq_preprocess(m, a, n);
-
-  INT x = 0;
-  INT y = 3;
-
-  printf("%d\n", rmq(m, a, n, x, y));
-
-  free(m);
-
-  return EXIT_SUCCESS;
-}
-
-#endif
