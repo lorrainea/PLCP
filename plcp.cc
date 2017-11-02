@@ -202,7 +202,7 @@ int main( int argc, char **argv )
 		return ( 1 );
 	}
 
-        fprintf( stderr, "Elapsed time for comparing sequences: %lf secs\n", ( end - start ) );
+        fprintf( stderr, "Elapsed time: %lf secs\n", ( end - start ) );
 
 	/* De-allocate */
 	free ( PLCP );
