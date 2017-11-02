@@ -29,7 +29,7 @@ struct TSwitch
     char *               input_filename;         // the input file name
     char *               output_filename;        // the output file name
     char *	         alphabet;
-    unsigned int         k, m;
+    unsigned int         k, m, T;
 };
 
 double gettime( void );

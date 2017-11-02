@@ -108,7 +108,6 @@ unsigned int extension( char * alphabet, unsigned int * character, unsigned int 
 	int search = floor( ( r + l ) / 2.0 );
 
 	bool end_reached = false;
-
 	
 	int R = sw . m + i + 5 ;
 

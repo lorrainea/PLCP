@@ -27,6 +27,7 @@
 #include <math.h>
 #include "short.h"
 #include "plcp.h"
+#include <omp.h>
 
 using namespace std;
 
@@ -42,6 +43,7 @@ int main( int argc, char **argv )
 	char *          alphabet;  
 	int i;
         unsigned char * seq    = NULL;          // the sequence in memory
+
 	/* Decodes the arguments */
         i = decode_switches ( argc, argv, &sw );
 
@@ -64,6 +66,8 @@ int main( int argc, char **argv )
                         return ( 1 );
                 }*/
         }
+
+	omp_set_num_threads( sw.T );
 
 	double start = gettime();
 
@@ -171,6 +175,7 @@ int main( int argc, char **argv )
 
 	k_mappability( seq, sw, PLCP, P, SA, LCP  );
 
+	#pragma omp parallel for
 	for(int i =0; i<l; i++)
 	{
 		if( PLCP[i] < sw . m )
@@ -179,28 +184,20 @@ int main( int argc, char **argv )
 
 	double end = gettime();
 
-	/*if ( ! ( out_fd = fopen ( output_filename, "w") ) )
+	if ( ! ( out_fd = fopen ( output_filename, "w") ) )
 	{
 		fprintf ( stderr, " Error: Cannot open file %s!\n", output_filename );
 		return ( 1 );
-	}*/
+	}
 
-	cout<<" PLCP: ";
-	for(int i=0; i<seq_len; i++ )
-		cout<<PLCP[i]<<" ";
 
-		cout<<endl;
-	
-	cout<<" P: ";
-	for(int i=0; i<seq_len; i++ )
-		cout<<P[i]<<" ";
-	cout<<endl;
+	for(int i=0; i<seq_len; i++ ) fprintf ( out_fd, "%d ", PLCP[i] );
 
-	/*if ( fclose ( out_fd ) )
+	if ( fclose ( out_fd ) )
 	{
 		fprintf( stderr, " Error: file close error!\n");
 		return ( 1 );
-	}*/
+	}
 
         fprintf( stderr, "Elapsed time for comparing sequences: %lf secs\n", ( end - start ) );
 
@@ -209,7 +206,7 @@ int main( int argc, char **argv )
 	free ( P );
         free ( seq );
         free ( sw . input_filename );
-        //free ( sw . output_filename );
+        free ( sw . output_filename );
 	free ( invSA );
 	free ( SA );
 	free ( LCP );

@@ -33,10 +33,10 @@
 static struct option long_options[] =
  {
    { "input-file",              required_argument, NULL, 'i' },
-   //{ "output-file",            required_argument, NULL, 'o' },
+   { "output-file",           required_argument, NULL, 'o' },
    //{ "alphabet", 		required_argument, NULL, 'a' },
    { "hamming-dist",            required_argument, NULL, 'k' },
-   //{ "length",    	    	required_argument, NULL, 'm' },
+   { "threads",                 required_argument, NULL, 't' },
    { "help",                    no_argument,       NULL, 'h' },
    {  NULL,                     0,                 NULL,  0  }
  };
@@ -58,10 +58,10 @@ int decode_switches ( int argc, char * argv [], struct TSwitch * sw )
    sw -> output_filename                = NULL;
   // sw -> alphabet			= NULL;
    sw -> k                              = 1;
-   sw -> m                              = 5;
+   sw -> T                              = 1;
    args = 0;
 
-   while ( ( opt = getopt_long ( argc, argv, "i:o:k:m:h", long_options, &oi ) ) != - 1 )
+   while ( ( opt = getopt_long ( argc, argv, "i:o:k:t:h", long_options, &oi ) ) != - 1 )
     {
       switch ( opt )
        {
@@ -78,11 +78,11 @@ int decode_switches ( int argc, char * argv [], struct TSwitch * sw )
            args ++;
            break;
 
-         /*case 'o':
+         case 'o':
            sw -> output_filename = ( char * ) malloc ( ( strlen ( optarg ) + 1 ) * sizeof ( char ) );
            strcpy ( sw -> output_filename, optarg );
            args ++;
-           break;*/
+           break;
 
          case 'k':
            val = strtol ( optarg, &ep, 10 );
@@ -91,20 +91,21 @@ int decode_switches ( int argc, char * argv [], struct TSwitch * sw )
               return ( 0 );
             }
            sw -> k = val;
+           args ++;
            break;
 
-         case 'm':
+         case 't':
            val = strtol ( optarg, &ep, 10 );
            if ( optarg == ep )
             {
               return ( 0 );
             }
-           sw -> m = val;
+           sw -> T = val;
            break;
        }
     }
 
-   if ( args < 1 )
+   if ( args < 3 )
      {
        usage ();
        exit ( 1 );
@@ -122,11 +123,11 @@ void usage ( void )
    fprintf ( stdout, " plcp <options>\n" );
    fprintf ( stdout, " Mandatory arguments:\n" );
    fprintf ( stdout, "  -i, --input-file	<str>	Sequence input filename.\n" );
-  // fprintf ( stdout, "  -o, --output-file	<str>	Output filename.\n" );
+   fprintf ( stdout, "  -o, --output-file	<str>	Output filename.\n" );
  //  fprintf ( stdout, "  -a, --alphabet	        <str>	DNA or PROT.\n" );
    fprintf ( stdout, "  -k, --hamming-dist	<int>	Hamming distance between matches.\n");
-  // fprintf ( stdout, "  -m, --length		<int>	The minimum length of match.\n\n");
- 
+   fprintf ( stdout, " Optional arguments:\n" );
+   fprintf ( stdout, "  -t, --threads		<int>	The number of threads to be used.\n\n");
  }
 
 double gettime( void )
