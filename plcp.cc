@@ -154,6 +154,9 @@ int main( int argc, char **argv )
 	compute_invSA( seq, l, SA, invSA );
 	compute_LCP( seq, l, SA, invSA, LCP );
 
+	INT lgl = flog2( l );
+        INT * A = ( INT * ) calloc( ( INT ) l * lgl, sizeof(INT) );
+        rmq_preprocess(A, LCP, l);
 
 	unsigned int * PLCP = ( unsigned int * ) calloc( ( seq_len + 1 ) , sizeof( unsigned int ) );
 	PLCP[ seq_len ] = '\0';
@@ -165,7 +168,7 @@ int main( int argc, char **argv )
 
 	int alph_len = 4;
 	
-	sw . m =  ceil( (sw.k+2) * ( log(l)/ log(alph_len) ) );
+	sw . m =  ceil( ( sw.k + 2 ) * ( log( l ) / log( alph_len ) ) );
 
 	if ( sw . k >= l )
 	{
@@ -173,13 +176,13 @@ int main( int argc, char **argv )
 		return ( 1 );
 	}
 
-	k_mappability( seq, sw, PLCP, P, SA, LCP  );
+	k_mappability( seq, sw, PLCP, P, SA, LCP );
 
 	#pragma omp parallel for
-	for(int i =0; i<l; i++)
+	for(int i =0; i < l; i++)
 	{
-		if( PLCP[i] < sw . m )
-			short_plcp( i, alphabet, seq, sw, PLCP, P, SA, LCP, invSA);		
+                if( PLCP[i] < sw . m )
+                        short_plcp( i, alphabet, seq, sw, PLCP, P, SA, LCP, invSA, A );		
 	}
 
 	double end = gettime();
@@ -191,7 +194,7 @@ int main( int argc, char **argv )
 	}
 
 
-	for(int i=0; i<seq_len; i++ ) fprintf ( out_fd, "%d ", PLCP[i] );
+	for(int i=0; i < l; i++ ) fprintf ( out_fd, "%d ", PLCP[i] );
 
 	if ( fclose ( out_fd ) )
 	{

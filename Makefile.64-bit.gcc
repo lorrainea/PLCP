@@ -8,7 +8,7 @@ LFLAGS= -std=c++11 -DNDEBUG -I ./libsdsl/include/ -L ./libsdsl/lib/ -lsdsl -ldiv
  
 EXE=    plcp
  
-SRC=    plcp.cc utils.cc long.cc short.cc functions.cc
+SRC=    plcp.cc utils.cc long.cc short.cc functions.cc rmq.cc
  
 HD=     plcp.h short.h Makefile.64-bit.gcc
  

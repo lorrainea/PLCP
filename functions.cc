@@ -28,7 +28,6 @@
 #include <fstream>
 #include <sys/time.h>
 #include "plcp.h"
-#include "short.h"
 
 #ifdef _USE_64
 #include <divsufsort64.h>                                         // include header for suffix sort
@@ -38,9 +37,8 @@
 #include <divsufsort.h>                                           // include header for suffix sort
 #endif
 
+
 #include <sdsl/bit_vectors.hpp>	
-
-
 
 using namespace std;
 
