@@ -8,5 +8,8 @@ GNU GPLv3 License; Copyright (C) 2017 Lorraine A.K. Ayad and Panagiotis Charalam
  plcp <options>
  Mandatory arguments:
   -i, --input-file	<str>	Sequence input filename.
+  -o, --output-file	<str>	Output filename.
   -k, --hamming-dist	<int>	Hamming distance between matches.
+ Optional arguments:
+  -t, --threads		<int>	The number of threads to be used.
 ```
