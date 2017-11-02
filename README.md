@@ -1,4 +1,4 @@
-PLCP: Permuted Longest Common Prefix
+Longest Common Prefixes with k-errors
 ===
 
 GNU GPLv3 License; Copyright (C) 2017 Lorraine A.K. Ayad, Panagiotis Charalampopoulos, 
