@@ -30,38 +30,38 @@
 
 using namespace std;
 
-unsigned int k_mappability( unsigned char * x, struct TSwitch  sw, unsigned int * PLCP, unsigned int * P, INT * SA, INT * LCP )
+INT k_mappability( unsigned char * x, struct TSwitch  sw, INT * PLCP, INT * P, INT * SA, INT * LCP )
 {
 	
 	INT block_length = sw . m / ( sw . k + 2 );
-	int l = strlen( (char*) x );
+	INT l = strlen( (char*) x );
 
-	for(int i=0; i<l; i++)
+	for(INT i=0; i<l; i++)
 	{
-		int j = 1;
+		INT j = 1;
 	
 		//////cout<<"invsai"<<SA[i] <<" "<<"invsaj" <<SA[i-j]<<" lcp "<< range_min_query( i, j,  LCP, x )<<endl;
 		//////cout<<" block length "<<block_length<<endl;
 
-		int rmq = LCP [ i ];
+		INT rmq = LCP [ i ];
 		while ( rmq >= block_length && i-j >= 0 )
 		{
 			if( SA[i-j] % block_length == 0  || SA[i] % block_length == 0 )
 			{
-				int left_i = SA[i];
-				int right_i = SA[i] + rmq - 1 ;
+				INT left_i = SA[i];
+				INT right_i = SA[i] + rmq - 1 ;
 
-				int left_j = SA[i-j];
-				int right_j = SA[i-j] + rmq - 1 ;
+				INT left_j = SA[i-j];
+				INT right_j = SA[i-j] + rmq - 1 ;
 
 
 				////cout<<" left and right i "<<left_i<<" "<<right_i<<endl;
 				////cout<<" left and right j "<<left_j<<" "<<right_j<<endl;
-				int hd_l = 0;
-				int hd_r = 0;
+				INT hd_l = 0;
+				INT hd_r = 0;
 
-				vector<int> * errors_i = new vector<int>();	
-				vector<int> * errors_j = new vector<int>();
+				vector<INT> * errors_i = new vector<INT>();	
+				vector<INT> * errors_j = new vector<INT>();
 
 				/* Identify positions of errors in left and right direction */
 				while( hd_l <= sw . k  ||  hd_r <= sw . k )
@@ -152,19 +152,19 @@ unsigned int k_mappability( unsigned char * x, struct TSwitch  sw, unsigned int 
 				sort( errors_j->begin(), errors_j->end() );
 
 				/*cout<<" errors i "<<endl;
-				for(int i=0; i<errors_i->size(); i++)
+				for(INT i=0; i<errors_i->size(); i++)
 				cout<<errors_i->at(i)<<" ";
 				cout<<endl;
 				cout<<" errors j "<<endl;
-				for(int i=0; i<errors_j->size(); i++)
+				for(INT i=0; i<errors_j->size(); i++)
 				cout<<errors_j->at(i)<<" ";
 		
 				cout<<endl;*/
 
-				int z = 0;
+				INT z = 0;
 
 				/* Check positions where an error occurs ( start of extension is an error ) */
-				for(int a = 0; a<errors_i->size(); a++ ) 
+				for(INT a = 0; a<errors_i->size(); a++ ) 
 				{
 
 					if ( errors_i->size()-(a+1) > sw . k  )// Number of error positions is larger than sw . k
@@ -213,7 +213,7 @@ unsigned int k_mappability( unsigned char * x, struct TSwitch  sw, unsigned int 
 				}
 
 				/* Check positions in between errors */
-				for(int a=0; a<errors_i->size(); a++)
+				for(INT a=0; a<errors_i->size(); a++)
 				{
 					if( errors_i->size()-(a+1) > sw . k + 1  ) // Check when number of positions is larger than sw.k
 					{
@@ -221,7 +221,7 @@ unsigned int k_mappability( unsigned char * x, struct TSwitch  sw, unsigned int 
 						z = errors_j->at(a)+1;
 						//cout<<errors_i->at(a)+1<<endl;
 						//cout<<errors_i->at(a+1)<<endl;	
-						for(int k =errors_i->at(a)+1; k<errors_i->at(a+1); k++)
+						for(INT k =errors_i->at(a)+1; k<errors_i->at(a+1); k++)
 						{	
 						
 							if( errors_i->at( a + sw.k + 1  ) - k > PLCP[ k ]  &&  errors_i->at( a + sw.k + 1  ) - k >= sw . m)
@@ -237,7 +237,7 @@ unsigned int k_mappability( unsigned char * x, struct TSwitch  sw, unsigned int 
 						z = errors_i->at(a)+1;
 						//cout<<errors_j->at(a)+1<<endl;
 						//cout<<errors_j->at(a+1)<<endl;
-						for(int k =errors_j->at(a)+1; k<errors_j->at(a+1); k++)
+						for(INT k =errors_j->at(a)+1; k<errors_j->at(a+1); k++)
 						{
 							
 							////cout<<errors_j->at( a + sw.k + 1  )- k<<" "<<PLCP[k]<<endl;
@@ -255,7 +255,7 @@ unsigned int k_mappability( unsigned char * x, struct TSwitch  sw, unsigned int 
 					{
 						/* Check remaining positions which have less than sw . k errors */
 						z = errors_j->at(a)+1; 
-						for(int k=errors_i->at(a)+1; k<=right_i; k++)
+						for(INT k=errors_i->at(a)+1; k<=right_i; k++)
 						{//cout<<" 1 K "<<k<<endl;
 							if( right_i - k + 1 > PLCP[ k ] && right_i - k + 1 >= sw . m  )
 							{//cout<<" A k "<<k<<endl;
@@ -268,7 +268,7 @@ unsigned int k_mappability( unsigned char * x, struct TSwitch  sw, unsigned int 
 						}
 
 						z = errors_i->at(a)+1;
-						for(int k=errors_j->at(a)+1; k<=right_j; k++)
+						for(INT k=errors_j->at(a)+1; k<=right_j; k++)
 						{//cout<<" 2 K "<<k<<endl;
 							if( right_j - k + 1 > PLCP[ k ] && right_j - k + 1 >= sw . m )
 							{	//cout<<" B k "<<k<<endl;

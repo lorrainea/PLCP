@@ -37,40 +37,69 @@ struct TSwitch
     char *               input_filename;         // the input file name
     char *               output_filename;        // the output file name
 //    char *	         alphabet;
-    unsigned int         k, m, T;
+    INT         k, m, T;
 };
 
 double gettime( void );
+
 int decode_switches ( int argc, char * argv [], struct TSwitch * sw  );
+
 void usage ( void );
-unsigned int LCParray( unsigned char *text, INT n, INT * SA, INT * ISA, INT * LCP );
 
-unsigned int compute_SA( unsigned char *text, INT n, INT * SA );
+INT LCParray( unsigned char *text, INT n, INT * SA, INT * ISA, INT * LCP );
 
-unsigned int compute_invSA( unsigned char *text, INT n, INT * SA, INT * invSA );
+INT compute_SA( unsigned char *text, INT n, INT * SA );
 
-unsigned int compute_LCP( unsigned char *text, INT n, INT * SA, INT * invSA, INT * LCP );
+INT compute_invSA( unsigned char *text, INT n, INT * SA, INT * invSA );
 
-unsigned int populate_PLCP( unsigned char *text, int l, INT * SA, INT * invSA, INT * LCP, unsigned int * PLCP, unsigned int * P );
+INT compute_LCP( unsigned char *text, INT n, INT * SA, INT * invSA, INT * LCP );
 
-unsigned int LCParray( unsigned char *text, INT n, INT * SA, INT * ISA, INT * LCP );
+INT populate_PLCP( unsigned char *text, INT l, INT * SA, INT * invSA, INT * LCP, INT * PLCP, INT * P );
 
-unsigned int k_mappability( unsigned char * x, struct TSwitch  sw, unsigned int * PLCP, unsigned int * P, INT * SA, INT * LCP );
+INT LCParray( unsigned char *text, INT n, INT * SA, INT * ISA, INT * LCP );
 
-unsigned int short_plcp( int i, char * alphabet, unsigned char * x, struct TSwitch  sw, unsigned int * PLCP, unsigned int * P, INT * SA, INT * LCP, INT * invSA, INT * A);
+INT k_mappability( unsigned char * x, struct TSwitch  sw, INT * PLCP, INT * P, INT * SA, INT * LCP );
 
-unsigned int extension( char * alphabet, unsigned int * character, unsigned int * error_pos,  int i , INT * SA, INT * invSA, INT * LCP, unsigned int * PLCP, unsigned int * P, struct TSwitch  sw, unsigned char * x,  int error, unsigned int * prev_errors, INT * A);
+INT short_plcp( INT i, char * alphabet, unsigned char * x, struct TSwitch  sw, INT * PLCP, INT * P, INT * SA, INT * LCP, INT * invSA, INT * A);
 
-unsigned int positions( char * alphabet, unsigned int * character, unsigned int * error_pos, int i, int error,  INT *  SA, INT * invSA, INT * LCP, unsigned int * PLCP, unsigned int * P, struct TSwitch sw, unsigned char * x, int start, int  end, int len_ext, unsigned int * prev_errors,  INT * A );
+INT extension( char * alphabet, INT * character, INT * error_pos,  INT i , INT * SA, INT * invSA, INT * LCP, INT * PLCP, INT * P, struct TSwitch  sw, unsigned char * x,  INT error, INT * prev_errors, INT * A);
+
+INT positions( char * alphabet, INT * character, INT * error_pos, INT i, INT error,  INT *  SA, INT * invSA, INT * LCP, INT * PLCP, INT * P, struct TSwitch sw, unsigned char * x, INT start, INT end, INT len_ext, INT * prev_errors,  INT * A );
+
+static __inline void  binary_search ( INT * left, INT * right, INT * key, INT value )
+{
+	if ( value )
+	{
+		( * left ) = ( * key ) + 1;
+		( * key ) = floor( ( (* right ) + ( * left ) ) / 2.0 );
+	}
+	else
+	{
+		( * right )  =  ( * key ) - 1;
+		( * key ) = floor( ( ( * right ) + ( * left ) ) / 2.0 );
+	}
+}
 
 #ifndef RMQ_H
 #define RMQ_H
 
 void rmq_preprocess(INT *m, INT *v, INT n);
-INT rmq(INT *m, INT *v, INT n, INT i, INT j);
+//INT rmq(INT *m, INT *v, INT n, INT i, INT j);
 
 static __inline INT flog2(INT v) {
   return (INT) floor (log2((double)(v)));
+}
+
+static __inline INT rmq(INT *m, INT *v, INT n, INT i, INT j) {
+  INT lgn = flog2(n); 
+  if (i > j) {INT tmp = j; j = i; i = tmp;}
+  i++; //for LCP
+  if (i == j) return i;
+  INT k = flog2(j-i+1); 
+  INT a = m[i * lgn + k]; 
+  INT shift = ((( INT ) 1) << k);
+  INT b = m[(j - shift + 1) * lgn + k];  
+  return v[a]>v[b]?b:a;
 }
 
 #endif

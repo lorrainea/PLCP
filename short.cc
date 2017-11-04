@@ -32,31 +32,31 @@
 
 using namespace std;
 
-unsigned int short_plcp( int i, char * alphabet, unsigned char * x, struct TSwitch  sw, unsigned int * PLCP, unsigned int * P, INT * SA, INT * LCP, INT * invSA, INT * A )
+INT short_plcp( INT i, char * alphabet, unsigned char * x, struct TSwitch  sw, INT * PLCP, INT * P, INT * SA, INT * LCP, INT * invSA, INT * A )
 {	
-	int l = strlen( (char*) x );
+	INT l = strlen( (char*) x );
 
-	int len = 0;
+	INT len = 0;
 
 	if( invSA[i]+1 < l )
 		len = max( LCP[invSA[i]], LCP[invSA[i]+1] ) + 1;
 	else len  = LCP[invSA[i]] + 1;
 
-	int len_ext = len;
+	INT len_ext = len;
 
-	int start = i;
-	int end = min(i + len, l-1 );
-	unsigned int * error_pos = ( unsigned int * ) calloc( min( (int) sw . k + 1, l - i + 1 )  , sizeof( unsigned int ) );
-	unsigned int * character = ( unsigned int * ) calloc( min( (int) sw . k + 1, l - i + 1 )  , sizeof( unsigned int ) );
+	INT start = i;
+	INT end = min(i + len, l-1 );
+	INT * error_pos = ( INT * ) calloc( min( (INT) sw . k + 1, l - i + 1 )  , sizeof( INT ) );
+	INT * character = ( INT * ) calloc( min( (INT) sw . k + 1, l - i + 1 )  , sizeof( INT ) );
 
-	unsigned int * prev_errors = ( unsigned int * ) calloc( min( (int) sw . k + 1, l - i + 1 )  , sizeof( unsigned int ) );
+	INT * prev_errors = ( INT * ) calloc( min( (INT) sw . k + 1, l - i + 1 )  , sizeof( INT ) );
 
-	for(int c = 0; c<sw . k; c++)
+	for(INT c = 0; c<sw . k; c++)
 		character[c] = 0;
-	character[min( (int)sw . k , l - i )] = '\0';
-	error_pos[min( (int) sw . k , l - i )] = '\0';
+	character[min( (INT)sw . k , l - i )] = '\0';
+	error_pos[min( (INT) sw . k , l - i )] = '\0';
 
-	int initial_error = sw .k;
+	INT initial_error = sw .k;
 		
 	if( initial_error > 0 )
 		positions( alphabet, character, error_pos, i, initial_error, SA, invSA, LCP, PLCP, P, sw, x, start, end, len_ext, prev_errors, A);
@@ -69,27 +69,27 @@ unsigned int short_plcp( int i, char * alphabet, unsigned char * x, struct TSwit
 }
 
 
-unsigned int positions( char * alphabet, unsigned int * character, unsigned int * error_pos, int i, int error, INT *  SA, INT * invSA, INT * LCP, unsigned int * PLCP, unsigned int * P, struct TSwitch sw, unsigned char * x, int start, int end, int len_ext,  unsigned int * prev_errors, INT * A)
+INT positions( char * alphabet, INT * character, INT * error_pos, INT i, INT error, INT *  SA, INT * invSA, INT * LCP, INT * PLCP, INT * P, struct TSwitch sw, unsigned char * x, INT start, INT end, INT len_ext,  INT * prev_errors, INT * A)
 { 
-	for(int j = start; j <= end; j++) 
+	for(INT j = start; j <= end; j++) 
 	{	
  		error_pos[sw . k - error ] = j;
 		
-		int length_k = 0;	
+		INT length_k = 0;	
 
-		for(int a = 0; a<strlen( (char*) alphabet ); a++)
+		for(INT a = 0; a<strlen( (char*) alphabet ); a++)
 		{
 			if( alphabet[a] != x[j] )
 			{
 				character[sw . k - error] = a;
 
-				int current_error =   sw . k - error;
+				INT current_error =   sw . k - error;
 
 				len_ext = extension( alphabet, character, error_pos, i, SA, invSA, LCP, PLCP, P, sw, x, current_error, prev_errors, A  );	
 
 				if( error  > 1 ) 
 				{
-					positions( alphabet, character, error_pos, i, error - 1, SA, invSA,  LCP, PLCP, P, sw, x,  min( j+1, (int ) strlen( ( char * ) x )-1 ), min( j + len_ext+1, (int ) strlen( ( char * ) x )-1 ), len_ext, prev_errors, A );
+					positions( alphabet, character, error_pos, i, error - 1, SA, invSA,  LCP, PLCP, P, sw, x,  min( j+1, (INT ) strlen( ( char * ) x )-1 ), min( j + len_ext+1, (INT ) strlen( ( char * ) x )-1 ), len_ext, prev_errors, A );
 
 				}
 			}
@@ -100,21 +100,7 @@ unsigned int positions( char * alphabet, unsigned int * character, unsigned int 
 	return 1;
 }
 
-void binary_search ( INT * left, INT * right, INT * key, INT value )
-{
-	if ( value )
-	{
-		( * left ) = ( * key ) + 1;
-		( * key ) = floor( ( (* right ) + ( * left ) ) / 2.0 );
-	}
-	else
-	{
-		( * right )  =  ( * key ) - 1;
-		( * key ) = floor( ( ( * right ) + ( * left ) ) / 2.0 );
-	}
-}
-
-unsigned int extension( char * alphabet, unsigned int * character, unsigned int * error_pos, int i, INT * SA, INT * invSA, INT * LCP, unsigned int * PLCP, unsigned int * P, struct TSwitch  sw, unsigned char * x, int  error, unsigned int * prev_errors,  INT * A)
+INT extension( char * alphabet, INT * character, INT * error_pos, INT i, INT * SA, INT * invSA, INT * LCP, INT * PLCP, INT * P, struct TSwitch  sw, unsigned char * x, INT  error, INT * prev_errors,  INT * A)
 {
 	INT error_p = error_pos[ error ];
 	INT prev_error = 0;
@@ -134,11 +120,10 @@ unsigned int extension( char * alphabet, unsigned int * character, unsigned int 
 	{
 	        INT rq = 0;
 		INT rq2 = 0;
-		int pos_value = SA[search];
+		INT pos_value = SA[search];
 		 
 		if ( invSA[prev_error] == search ) rq = n - prev_error;
 		else rq = LCP[rmq(A, LCP, n , invSA[prev_error], search )];
-//cout<<SA[search]<<"  ";
 		if( rq >= error_p - i ) // r - j 
 		{	
 			if( SA[search] + error_p - i == n ) binary_search ( &l, &r, &search, 1 );	//q reached end of string
@@ -175,7 +160,6 @@ unsigned int extension( char * alphabet, unsigned int * character, unsigned int 
 			INT value = 0; if ( SA[search] + rq == n || x[ prev_error + rq ] > x[SA[search] + rq]  ) value = 1;
 		        binary_search ( &l, &r, &search, value  );
 		}
-//cout<<rq<<"  "<<alphabet[character[error]]<<"  "<<error_p<<"  "<<rq2<<endl;
 	}//end of while
 
 	return ( len_ext - error_p + i - 1 );

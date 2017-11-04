@@ -25,8 +25,9 @@
 #include <string>
 #include <sys/time.h>
 #include <math.h>
-#include "plcp.h"
 #include <omp.h>
+
+#include "plcp.h"
 
 using namespace std;
 
@@ -39,12 +40,12 @@ int main( int argc, char **argv )
 	FILE *           out_fd;                 // the input file descriptor
         char *           input_filename;         // the input file name
         char *           output_filename;        // the output file name
-	char *          alphabet;  
-	int i;
-        unsigned char * seq    = NULL;          // the sequence in memory
+	char *           alphabet;  
+        unsigned char * seq       = NULL;          // the sequence in memory
+        unsigned char * seq_id    = NULL;          // the sequence in memory
 
 	/* Decodes the arguments */
-        i = decode_switches ( argc, argv, &sw );
+        INT i = decode_switches ( argc, argv, &sw );
 
 	/* Check the arguments */
         if ( i < 1 )
@@ -77,25 +78,37 @@ int main( int argc, char **argv )
                 return ( 1 );
         }
 
-        char c;
-        unsigned int num_seqs = 0;           
-        unsigned int total_length = 0;       
-        unsigned int max_alloc_seq_id = 0;
-        unsigned int max_alloc_seq = 0;
-	unsigned int seq_len = 0;
+        INT max_alloc_seq_id = 0;
+        INT max_alloc_seq = 0;
+	INT seq_len = 0;
 
+        char c;
+	c = fgetc( in_fd );
         do
         {
+		if ( c != '>' )
+		{
+			fprintf ( stderr, " Error: input file %s is not in FASTA format!\n", input_filename );
+			return ( 1 );
+		}
+		else
+		{
+			INT max_alloc_seq_id = 0;
+			INT seq_id_len = 0;
+			while ( ( c = fgetc( in_fd ) ) != EOF && c != '\n' )
+			{
+				if ( seq_id_len >= max_alloc_seq_id )
+				{
+					seq_id = ( unsigned char * ) realloc ( seq_id,   ( max_alloc_seq_id + ALLOC_SIZE ) * sizeof ( unsigned char ) );
+					max_alloc_seq_id += ALLOC_SIZE;
+				}
+				seq_id[ seq_id_len++ ] = c;
+			}
+			seq_id[ seq_id_len ] = '\0';
+			
+		}
                 
-		if ( num_seqs >= max_alloc_seq )
-                {
-                        seq = ( unsigned char * ) realloc ( seq,   ( max_alloc_seq + ALLOC_SIZE ) * sizeof ( unsigned char  ) );
-                        max_alloc_seq += ALLOC_SIZE;
-                }
-
-   
-                unsigned int max_alloc_seq_len = 0;
-
+                INT max_alloc_seq_len = 0;
 
                 while ( ( c = fgetc( in_fd ) ) != EOF )
                 {
@@ -122,16 +135,13 @@ int main( int argc, char **argv )
 			}
 			else
 			{
-				fprintf ( stderr, " Error: input file %s contains an unexpected character %c!\n", input_filename, c );
+				fprintf ( stderr, " Error: input file %s contains an unexpected letter %c not in %s!\n", input_filename, c, alphabet );
 				return ( 1 );
-			
                         }
 
                 }
 
 		seq[ seq_len ] = '\0';
-		total_length += seq_len;
-		num_seqs++;
 
         } 
 	while( c != EOF );
@@ -141,13 +151,13 @@ int main( int argc, char **argv )
 		fprintf( stderr, " Error: file close error!\n");
 		return ( 1 );
 	}
+	fprintf( stderr, "Processing sequence %s\n", seq_id);
 
 	INT l = seq_len;
 
 	INT * SA = ( INT * ) malloc( ( l ) * sizeof( INT ) );
 	INT * LCP = ( INT * ) calloc  ( l, sizeof( INT ) );
 	INT * invSA = ( INT * ) calloc( l , sizeof( INT ) );
-	
 
 	compute_SA( seq, l, SA );
 	compute_invSA( seq, l, SA, invSA );
@@ -157,15 +167,15 @@ int main( int argc, char **argv )
         INT * A = ( INT * ) calloc( ( INT ) l * lgl, sizeof(INT) );
         rmq_preprocess(A, LCP, l);
 
-	unsigned int * PLCP = ( unsigned int * ) calloc( ( seq_len + 1 ) , sizeof( unsigned int ) );
+	INT * PLCP = ( INT * ) calloc( ( seq_len + 1 ) , sizeof( INT ) );
 	PLCP[ seq_len ] = '\0';
 
-	unsigned int * P = ( unsigned int * ) calloc( ( seq_len + 1 ) , sizeof( unsigned int ) );
+	INT * P = ( INT * ) calloc( ( seq_len + 1 ) , sizeof( INT ) );
 	P[ seq_len ] = '\0';
 
 	populate_PLCP( seq, l, SA, invSA, LCP, PLCP, P );
 
-	int alph_len = 4;
+	INT alph_len = strlen ( ( char * ) alphabet );
 	
 	sw . m =  ceil( ( sw.k + 2 ) * ( log( l ) / log( alph_len ) ) );
 
@@ -175,10 +185,12 @@ int main( int argc, char **argv )
 		return ( 1 );
 	}
 
+	fprintf( stderr, " Checking for long LCPs with %ld errors.\n", sw . k);
 	k_mappability( seq, sw, PLCP, P, SA, LCP );
 
+	fprintf( stderr, " Checking for short LCPs with %ld errors.\n", sw . k);
 	#pragma omp parallel for
-	for(int i =0; i < l; i++)
+	for( INT i = 0; i < l; i++ )
 	{
                 if( PLCP[i] < sw . m )
                         short_plcp( i, alphabet, seq, sw, PLCP, P, SA, LCP, invSA, A );		
@@ -193,7 +205,7 @@ int main( int argc, char **argv )
 	}
 
 
-	for(int i=0; i < l; i++ ) fprintf ( out_fd, "%d ", PLCP[i] );
+	for( INT i=0; i < l; i++ ) fprintf ( out_fd, "%ld ", PLCP[i] );
 
 	if ( fclose ( out_fd ) )
 	{
@@ -207,6 +219,7 @@ int main( int argc, char **argv )
 	free ( PLCP );
 	free ( P );
         free ( seq );
+        free ( seq_id );
         free ( sw . input_filename );
         free ( sw . output_filename );
 	free ( invSA );

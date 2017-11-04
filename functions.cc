@@ -42,7 +42,7 @@
 
 using namespace std;
 
-unsigned int LCParray( unsigned char *text, INT n, INT * SA, INT * ISA, INT * LCP )
+INT LCParray( unsigned char *text, INT n, INT * SA, INT * ISA, INT * LCP )
 {										
 	INT i=0, j=0;
 
@@ -60,8 +60,7 @@ unsigned int LCParray( unsigned char *text, INT n, INT * SA, INT * ISA, INT * LC
 return 1;
 }
 
-
-unsigned int compute_SA( unsigned char *text, INT n, INT * SA )
+INT compute_SA( unsigned char *text, INT n, INT * SA )
 {
 
         if( ( SA == NULL) )
@@ -90,7 +89,7 @@ return 1;
 }
 
 
-unsigned int compute_invSA( unsigned char *text, INT n, INT * SA, INT * invSA )
+INT compute_invSA( unsigned char *text, INT n, INT * SA, INT * invSA )
 {
         if( ( invSA == NULL) )
         {
@@ -107,7 +106,7 @@ return 1;
 }
 
 
-unsigned int compute_LCP( unsigned char *text, INT n, INT * SA, INT * invSA, INT * LCP )
+INT compute_LCP( unsigned char *text, INT n, INT * SA, INT * invSA, INT * LCP )
 {
         if( ( LCP == NULL) )
         {
@@ -126,10 +125,10 @@ return 1;
 
 
 
-unsigned int populate_PLCP( unsigned char *text, int l, INT * SA, INT * invSA, INT * LCP, unsigned int * PLCP, unsigned int * P )
+INT populate_PLCP( unsigned char *text, INT l, INT * SA, INT * invSA, INT * LCP, INT * PLCP, INT * P )
 {
 
-	for(int i =0; i<l; i++)
+	for( INT i = 0; i<l; i++ )
 	{
 		if( invSA[i]+1 < l )
 		{
