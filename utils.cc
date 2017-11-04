@@ -137,10 +137,3 @@ double gettime( void )
     return ttime.tv_sec + ttime.tv_usec * 0.000001;
  }
 
-void create_rotation ( unsigned char * x, unsigned int offset, unsigned char * rotation )
- {
-    unsigned int m = strlen ( ( char * ) x );
-    memmove ( &rotation[0], &x[offset], m - offset );
-    memmove ( &rotation[m - offset], &x[0], offset );
-    rotation[m] = '\0';
- }
