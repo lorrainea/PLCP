@@ -12,5 +12,5 @@ Costas S. Iliopoulos and Solon P. Pissis
   -o, --output-file	<str>	Output filename.
   -k, --hamming-dist	<int>	Hamming distance between matches.
  Optional arguments:
-  -t, --threads		<int>	The number of threads to be used.
+  -t, --threads		<int>	The number of threads to be used (default: 1).
 ```

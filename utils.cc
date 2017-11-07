@@ -127,7 +127,7 @@ void usage ( void )
  //  fprintf ( stdout, "  -a, --alphabet	        <str>	DNA or PROT.\n" );
    fprintf ( stdout, "  -k, --hamming-dist	<int>	Hamming distance between matches.\n");
    fprintf ( stdout, " Optional arguments:\n" );
-   fprintf ( stdout, "  -t, --threads		<int>	The number of threads to be used.\n\n");
+   fprintf ( stdout, "  -t, --threads		<int>	The number of threads to be used (default: 1).\n\n");
  }
 
 double gettime( void )
