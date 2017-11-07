@@ -122,7 +122,7 @@ void usage ( void )
  {
    fprintf ( stdout, " plcp <options>\n" );
    fprintf ( stdout, " Mandatory arguments:\n" );
-   fprintf ( stdout, "  -i, --input-file	<str>	Sequence input filename.\n" );
+   fprintf ( stdout, "  -i, --input-file	<str>	Sequence input filename (FASTA format).\n" );
    fprintf ( stdout, "  -o, --output-file	<str>	Output filename.\n" );
  //  fprintf ( stdout, "  -a, --alphabet	        <str>	DNA or PROT.\n" );
    fprintf ( stdout, "  -k, --hamming-dist	<int>	Hamming distance between matches.\n");
