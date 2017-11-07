@@ -8,7 +8,7 @@ Costas S. Iliopoulos and Solon P. Pissis
 ```
  plcp <options>
  Mandatory arguments:
-  -i, --input-file	<str>	Sequence input filename.
+  -i, --input-file	<str>	Sequence input filename (FASTA format).
   -o, --output-file	<str>	Output filename.
   -k, --hamming-dist	<int>	Hamming distance between matches.
  Optional arguments:
