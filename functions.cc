@@ -1,7 +1,7 @@
 /**
     PLCP
-    Copyright (C) 2017 Lorraine A.K. Ayad and Panagiotis Charalampopoulos 
-    and Costas S. Iliopoulos and Solon P. Pissis
+    Copyright (C) 2017 Lorraine A.K. Ayad and Carl Barton and Panagiotis  
+    Charalampopoulos and Costas S. Iliopoulos and Solon P. Pissis
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,11 +30,11 @@
 #include "plcp.h"
 
 #ifdef _USE_64
-#include <divsufsort64.h>                                         // include header for suffix sort
+#include <divsufsort64.h>       
 #endif
 
 #ifdef _USE_32
-#include <divsufsort.h>                                           // include header for suffix sort
+#include <divsufsort.h> 
 #endif
 
 

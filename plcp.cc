@@ -1,7 +1,7 @@
 /**
     PLCP
-    Copyright (C) 2017 Lorraine A.K. Ayad and Panagiotis Charalampopoulos 
-    and Costas S. Iliopoulos and Solon P. Pissis
+    Copyright (C) 2018 Lorraine A.K. Ayad and Carl Barton and Panagiotis  
+    Charalampopoulos and Costas S. Iliopoulos and Solon P. Pissis
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@
 #include <sys/time.h>
 #include <math.h>
 #include <omp.h>
-
 #include "plcp.h"
 
 using namespace std;
@@ -39,8 +38,7 @@ int main( int argc, char **argv )
 	FILE *           in_fd;                  // the input file descriptor
 	FILE *           out_fd;                 // the input file descriptor
         char *           input_filename;         // the input file name
-        char *           output_filename;        // the output file name
-	char *           alphabet;  
+        char *           output_filename;        // the output file name 
         unsigned char * seq       = NULL;          // the sequence in memory
         unsigned char * seq_id    = NULL;          // the sequence in memory
 
@@ -57,17 +55,10 @@ int main( int argc, char **argv )
         {
                 input_filename          = sw . input_filename;
                 output_filename         = sw . output_filename;
+	}
 
-		alphabet = ( char * ) DNA;
-               /* else if ( ! strcmp ( "PROT", sw . alphabet ) )  alphabet = ( char * ) PROT;
-                else
-                {
-                        fprintf ( stderr, " Error: alphabet argument a should be `DNA' for nucleotide sequences or `PROT' for protein sequences or `USR' for sequences over a user-defined alphabet!\n" );
-                        return ( 1 );
-                }*/
-        }
 
-	omp_set_num_threads( sw.T );
+	omp_set_num_threads( sw.t );
 
 	double start = gettime();
 
@@ -129,16 +120,7 @@ int main( int argc, char **argv )
                                 max_alloc_seq_len += ALLOC_SIZE;
                         }
 
-			if( strchr ( alphabet, c ) )
-			{
-				seq[ seq_len++ ] = c;
-			}
-			else
-			{
-				fprintf ( stderr, " Error: input file %s contains an unexpected letter %c not in %s!\n", input_filename, c, alphabet );
-				return ( 1 );
-                        }
-
+			seq[ seq_len++ ] = c;
                 }
 
 		seq[ seq_len ] = '\0';
@@ -162,10 +144,14 @@ int main( int argc, char **argv )
 	compute_SA( seq, l, SA );
 	compute_invSA( seq, l, SA, invSA );
 	compute_LCP( seq, l, SA, invSA, LCP );
+	INT * A;
 
-	INT lgl = flog2( l );
-        INT * A = ( INT * ) calloc( ( INT ) l * lgl, sizeof(INT) );
-        rmq_preprocess(A, LCP, l);
+	if( sw . r == 0 )
+	{
+		INT lgl = flog2( l );
+		A = ( INT * ) calloc( ( INT ) l * lgl, sizeof(INT) );
+		rmq_preprocess(A, LCP, l);
+	}
 
 	INT * PLCP = ( INT * ) calloc( ( seq_len + 1 ) , sizeof( INT ) );
 	PLCP[ seq_len ] = '\0';
@@ -175,9 +161,9 @@ int main( int argc, char **argv )
 
 	populate_PLCP( seq, l, SA, invSA, LCP, PLCP, P );
 
-	INT alph_len = strlen ( ( char * ) alphabet );
-	
-	sw . m =  ceil( ( sw.k + 2 ) * ( log( l ) / log( alph_len ) ) );
+	sw . m =  ( 2.0 ) *  log( l );
+
+	unordered_map< pair<INT, INT>, INT,pair_hash > h_map;
 
 	if ( sw . k >= l )
 	{
@@ -185,18 +171,25 @@ int main( int argc, char **argv )
 		return ( 1 );
 	}
 
-	fprintf( stderr, " Checking for long LCPs with %ld errors.\n", sw . k);
-	k_mappability( seq, sw, PLCP, P, SA, LCP );
-
-	fprintf( stderr, " Checking for short LCPs with %ld errors.\n", sw . k);
-	#pragma omp parallel for
-	for( INT i = 0; i < l; i++ )
+	if( sw . k > 0 )
 	{
-                if( PLCP[i] < sw . m )
-                        short_plcp( i, alphabet, seq, sw, PLCP, P, SA, LCP, invSA, A );		
+		fprintf( stderr, " Checking for short LCPs with %ld errors.\n", sw . k);
+		short_plcp( seq, sw, PLCP, P, SA, LCP, invSA, A, &h_map );
+
+		fprintf( stderr, " Checking for long LCPs with %ld errors.\n", sw . k);
+		long_plcp( seq, sw, PLCP, P, SA, LCP, &h_map );
 	}
 
 	double end = gettime();
+
+
+	/*for(INT i =0; i<l; i++)
+		cout<<PLCP[i]<<" ";
+
+	cout<<endl;
+
+	for(INT i =0; i<l; i++)
+		cout<<P[i]<<" ";*/
 
 	if ( ! ( out_fd = fopen ( output_filename, "w") ) )
 	{
@@ -205,7 +198,13 @@ int main( int argc, char **argv )
 	}
 
 
-	for( INT i=0; i < l; i++ ) fprintf ( out_fd, "%ld ", PLCP[i] );
+	for( INT i=0; i < l; i++ ) 
+		fprintf ( out_fd, "%ld ", PLCP[i] );
+
+	fprintf( out_fd, "\n" );
+
+	for( INT i=0; i < l; i++ ) 
+		fprintf ( out_fd, "%ld ", P[i] );
 
 	if ( fclose ( out_fd ) )
 	{

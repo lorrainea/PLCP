@@ -1,6 +1,6 @@
 /**
     PLCP
-    Copyright (C) 2017 Lorraine A.K. Ayad and Panagiotis Charalampopoulos 
+    Copyright (C) 2018 Lorraine A.K. Ayad and Panagiotis Charalampopoulos 
     and Costas S. Iliopoulos and Solon P. Pissis
 
     This program is free software: you can redistribute it and/or modify
@@ -24,144 +24,426 @@
 #include <getopt.h>
 #include <assert.h>
 #include <iostream>
-#include <vector>
 #include <fstream>
+#include <vector>
+#include <algorithm>
+#include <string>
+#include <omp.h>
 #include <sys/time.h>
 
 #include "plcp.h"
 
 using namespace std;
 
-INT short_plcp( INT i, char * alphabet, unsigned char * x, struct TSwitch  sw, INT * PLCP, INT * P, INT * SA, INT * LCP, INT * invSA, INT * A )
-{	
-	INT l = strlen( (char*) x );
+INT nchoosek( INT n, INT k ) 
+{
+	if (n < k) 
+		return 0;
+        if (n == k) 
+		return 1;
+        INT s = min(k, (n - k));
+        INT t = n;
+        for (INT a = n - 1, b = 2; b <= s; a--, b++)
+            t = (t * a) / b;
 
-	INT len = 0;
+return t;
+}
 
-	if( invSA[i]+1 < l )
-		len = max( LCP[invSA[i]], LCP[invSA[i]+1] ) + 1;
-	else len  = LCP[invSA[i]] + 1;
+INT combinadic( INT n, INT k, INT i, INT ** error_pos ) 
+{
+        INT x = i;
+        INT a = n;
+        INT b = k;
 
-	INT len_ext = len;
+	INT thread = omp_get_thread_num();
 
-	INT start = i;
-	INT end = min(i + len, l-1 );
-	INT * error_pos = ( INT * ) calloc( min( (INT) sw . k + 1, l - i + 1 )  , sizeof( INT ) );
-	INT * character = ( INT * ) calloc( min( (INT) sw . k + 1, l - i + 1 )  , sizeof( INT ) );
-
-	INT * prev_errors = ( INT * ) calloc( min( (INT) sw . k + 1, l - i + 1 )  , sizeof( INT ) );
-
-	for(INT c = 0; c<sw . k; c++)
-		character[c] = 0;
-	character[min( (INT)sw . k , l - i )] = '\0';
-	error_pos[min( (INT) sw . k , l - i )] = '\0';
-
-	INT initial_error = sw .k;
+        for (INT c = 0; c < k; c++) 
+	{
+		INT v = a - 1;
+        	while ( nchoosek( v, b) > x ) 
+			v--;
 		
-	if( initial_error > 0 )
-		positions( alphabet, character, error_pos, i, initial_error, SA, invSA, LCP, PLCP, P, sw, x, start, end, len_ext, prev_errors, A);
+		error_pos[thread][c] = v;
+           	x = x - nchoosek(error_pos[thread][c], b);
+           	a = error_pos[thread][c];
+           	b--;
+	}
 
-	free( error_pos );
-	free( character );
-	free( prev_errors );
-		
-	return 1;
+	for (INT j = 0; j < k; j++)
+            	error_pos[thread][j] = n - error_pos[thread][j] - 1;
+
+return 1;
 }
 
 
-INT positions( char * alphabet, INT * character, INT * error_pos, INT i, INT error, INT *  SA, INT * invSA, INT * LCP, INT * PLCP, INT * P, struct TSwitch sw, unsigned char * x, INT start, INT end, INT len_ext,  INT * prev_errors, INT * A)
-{ 
-	for(INT j = start; j <= end; j++) 
-	{	
- 		error_pos[sw . k - error ] = j;
-		
-		INT length_k = 0;	
+INT short_plcp( unsigned char * x, TSwitch sw, INT * PLCP, INT * P, INT * SA, INT * LCP, INT * invSA, INT * A, unordered_map<pair<INT, INT>, INT, pair_hash> * h_map )
+{	
+	INT l = strlen( (char*) x );
+	INT nck = nchoosek( sw.m, sw.k );
+	
+	INT ** thread_plcp = ( INT ** ) calloc( ( sw . t ) , sizeof( INT * ) ); 
+	INT ** thread_p = ( INT ** ) calloc( ( sw . t ) , sizeof( INT * ) ); 
+	INT ** column_lengths = ( INT ** ) calloc( ( sw.t) , sizeof( INT *) );
+	INT ** start_column = ( INT ** ) calloc( ( sw.t ) , sizeof( INT *) );
+	INT ** order = ( INT ** ) calloc( ( sw.t ) , sizeof( INT *) );
+	INT ** rank1 = ( INT ** ) calloc( ( sw . t ) , sizeof( INT *) ); 
+	INT ** rank2 = ( INT ** ) calloc( ( sw . t ) , sizeof( INT *) ); 
+	INT ** final_rank = ( INT ** ) calloc( ( sw . t ) , sizeof( INT *) ); 
+	INT ** error_pos = ( INT ** ) calloc( ( sw . t ) , sizeof( INT * ) ); 
 
-		for(INT a = 0; a<strlen( (char*) alphabet ); a++)
+	for(INT i =0; i<sw . t; i++)
+	{
+		thread_plcp[i] = ( INT * ) calloc( ( l ) , sizeof( INT  ) ); 
+		thread_p[i] = ( INT * ) calloc( ( l ) , sizeof( INT ) );
+		order[i] = ( INT * ) calloc( ( l ) , sizeof( INT ) );
+		rank1[i] = ( INT * ) calloc( ( l ) , sizeof( INT ) );
+		rank2[i] = ( INT * ) calloc( ( l ) , sizeof( INT ) );
+		final_rank[i] = ( INT * ) calloc( ( l ) , sizeof( INT ) );
+		column_lengths[i] = ( INT * ) calloc( ( sw.k + 1 ) , sizeof( INT ) );
+		start_column[i] = ( INT * ) calloc( ( sw.k + 1 ) , sizeof( INT ) );
+		error_pos[i] = ( INT * ) calloc( ( sw.k ) , sizeof( INT ) );	
+	}
+
+	vector<vector<vector<INT>>> * bucket = new vector<vector<vector<INT>>>;
+	vector<vector<INT>> inp;
+	vector<INT> inp2;
+
+	for(INT a = 0; a<=l; a++)
+		inp.push_back( inp2 ); // <=l as rank starts from 1 and 0 means no substring at all in column
+	
+	for( INT b = 0; b<sw.t; b++)
+		bucket->push_back( inp );
+
+	INT thread = omp_get_thread_num();
+
+
+	#pragma omp parallel for	
+	for( INT i =0; i<nck; i++)
+	{
+		combinadic( sw.m, sw.k, i, error_pos );
+		compute_plcp( l, error_pos, SA, invSA, LCP, PLCP, P, A, thread_plcp, thread_p, sw, column_lengths, start_column, order, rank1, rank2, final_rank, bucket, h_map );
+	}
+
+
+	for( INT i = 0; i<sw . t ; i++)
+	{
+		for( INT j=0; j<l; j++ )
 		{
-			if( alphabet[a] != x[j] )
+			if( thread_plcp[ i ][ j ] > PLCP[j] )	
 			{
-				character[sw . k - error] = a;
-
-				INT current_error =   sw . k - error;
-
-				len_ext = extension( alphabet, character, error_pos, i, SA, invSA, LCP, PLCP, P, sw, x, current_error, prev_errors, A  );	
-
-				if( error  > 1 ) 
-				{
-					positions( alphabet, character, error_pos, i, error - 1, SA, invSA,  LCP, PLCP, P, sw, x,  min( j+1, (INT ) strlen( ( char * ) x )-1 ), min( j + len_ext+1, (INT ) strlen( ( char * ) x )-1 ), len_ext, prev_errors, A );
-
-				}
+				PLCP[j] =  thread_plcp[ i ][ j ];
+				P[j] = thread_p[i][j];
 			}
 		}
+	}
+	
+
+	for(INT i =0; i<sw.t; i++)
+	{
+		free( thread_plcp[i] );
+		free( thread_p[i] );
+		free( column_lengths[i] );
+		free( start_column[i] );
+		free( order[i] );
+		free( rank1[i] );
+		free( rank2[i] );
+		free( final_rank[i] );
+		free( error_pos[i] );
+	}
+	free( thread_plcp );
+	free( thread_p );
+	free( column_lengths );
+	free( start_column );
+	free( order );
+	free( rank1 );
+	free( rank2 );
+	free( final_rank );
+	free( error_pos );
+	delete( bucket );
+
+return 1;
+}
+        
+
+
+/*computing plcp for one set of error positions*/
+INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT * PLCP, INT * P, INT * A, INT ** thread_plcp, INT ** thread_p, TSwitch sw, INT ** column_lengths, INT ** start_column, INT ** order, INT ** rank1, INT ** rank2, INT ** final_rank, vector<vector<vector<INT>>> * bucket,  unordered_map<pair<INT, INT>, INT, pair_hash> * h_map   )
+{
+
+	INT thread = omp_get_thread_num();
+
+	INT current_pos = 0 ; 
+	INT plcp = 0;
+	INT errorPosCur = - 1; 
+	INT errorPosNxt = error_pos[thread][0];
+
+	bool draw = false;
+	bool first = true;
+
+	for(INT b = 0; b<l; b++)
+		rank1[thread][b] = 0;
+
+	INT a = 0;
+
+	for(a=0; a<=sw.k; a++)
+	{
+		INT column_length = (  errorPosNxt - errorPosCur ) - 1;
+
+		column_lengths[thread][a] = column_length;
+		start_column[thread][a] = current_pos;
+
+		for(INT b = 0; b<l; b++)
+		{
+			order[thread][b] = -1;
+			rank2[thread][b] = 0;
+		}
+
+		if( column_length > 0 )
+		{			
+
+			for(INT b = 0; b<l; b++)
+			{	
+				if( SA[b]+ current_pos  > l-1 )
+					continue;
+				else order[thread][invSA[SA[b]+current_pos]] = b;
+				
+			}
+			
+			INT rank = 1;
+
+			if( first == true ) // first time need to add everything to add rank1 else add everything to rank2
+			{
+				for(INT b = 1; b<l-1; b++)
+				{
+					
+					if( order[thread][b-1] != -1 )
+					{
+						if( LCP[b] >= column_length )
+						{	
+							rank1[thread][order[thread][b-1]] = rank;
+							if( b > 1 )
+								draw = true;
+						}
+						else rank1[thread][order[thread][b-1]] = rank++;
+					}
+				}
+
+				if( order[thread][l-1] != -1)
+				{
+					if( LCP[l-1] >= column_length )
+					{
+						rank1[thread][order[thread][l-1]] = rank;
+						draw = true;
+					}
+					else rank1[thread][order[thread][l-1]] = rank++;
+				}
+
+				first = false;
+
+				if( draw == false )	
+				{
+					a++;
+					break;
+				}
+			}
+			else
+			{
+				
+				for(INT b = 1; b<l-1; b++)
+				{	
+					if( order[thread][b-1] != -1 )
+					{	
+						if( LCP[b] >= column_length )
+						{	
+							rank2[thread][order[thread][b-1]] = rank;
+
+							if( b > 1 )
+								draw = true;
+						}
+						else rank2[thread][order[thread][b-1]] = rank++;
+					}
+				}
+
+				if( order[thread][l-1] != -1)
+				{
+					if( LCP[l-1] >= column_length )
+					{
+						rank2[thread][order[thread][l-1]] = rank;
+						draw = true;
+					}
+					else rank2[thread][order[thread][l-1]] = rank++;
+				}
+
+				if( draw == false )
+				{
+					a++;
+					break;
+				}
+					
+				bucket_sort_pair( rank1, rank2, l, order, final_rank, bucket, sw );
+			}
+
+			
+		}
+
+		errorPosCur = errorPosNxt;
+		current_pos = errorPosCur + 1;
+		if( a <sw.k-1 )
+			errorPosNxt = error_pos[thread][a+1];
+		else errorPosNxt = l;	
+	}
+
+
+	for(INT b = 0; b<l; b++)
+	{	
+		rank2[thread][b] = -1;
+	}
+
+	for(INT b = 0; b<l; b++)
+	{	
+		if( rank1[thread][b]-1 < 0 )
+			rank2[thread][b] ;
+		else rank2[thread][rank1[thread][b]-1] = SA[b];
+	}
+
+	for(INT c = 1; c<l; c++ )
+	{
+		
+		if( rank2[thread][c] == -1 || rank2[thread][c-1] == -1 )
+			continue;
+
+		INT total = 0;
+
+		for(INT b = 0; b<a; b++) // k + 1 * n rmqs, break at a if no draws
+		{	
+			if( column_lengths[thread][b] == 0 )
+				continue;
+			
+			INT rq = 0;
+
+
+			if( rank2[thread][c-1]+start_column[thread][b] >= l || rank2[thread][c]+start_column[thread][b] >=l )
+				rq = 0;
+			else rq = LCP[ rmq(A, LCP, l, invSA[rank2[thread][c]+start_column[thread][b]], invSA[rank2[thread][c-1]+ start_column[thread][b]] ) ] ; 
+			if(  rq >= column_lengths[thread][b] )
+				total = total + column_lengths[thread][b];
+			else if( rq < column_lengths[thread][b] )
+			{
+				total = total + rq ;
+				break; // rq is not equal to whole column so error is occurring at end of column
+			}
+		}
+
+		if( total + sw.k  >= sw.m )
+		{
+			pair<INT, INT> toadd( rank2[thread][c], rank2[thread][c-1] );
+			unordered_map<pair<INT,INT>, INT, pair_hash>::const_iterator pos = h_map->find( toadd );
+			if( pos == h_map->end()  )
+			{
+				pair< pair<INT, INT>, INT > toadd2( toadd, 1 );
+				h_map->insert( toadd2 ); 
+			}
+		}
+
+		if( min( total + sw.k, l - rank2[thread][c]  ) > thread_plcp[ thread  ][ rank2[thread][c] ] )
+		{
+			thread_plcp[ thread ][ rank2[thread][c] ] =  min( total + sw.k, l - rank2[thread][c] );	
+			thread_p[ omp_get_thread_num() ][ rank2[thread][c] ] = rank2[thread][c-1];
+		}
+
+		if( min( total + sw.k, l - rank2[thread][c-1]  ) > thread_plcp[ thread ][ rank2[thread][c-1] ] )
+		{
+
+			thread_plcp[thread ][ rank2[thread][c-1] ] = min( total + sw.k, l - rank2[thread][c-1] );	
+			thread_p[ thread ][ rank2[thread][c-1] ] = rank2[thread][c];
+		}
+	}
+
+return 1;
+}
+
+
+INT bucket_sort_pair( INT ** rank1, INT ** rank2, INT l, INT ** order, INT ** final_rank, vector<vector<vector<INT>>> * bucket, TSwitch sw )
+{
+
+	INT thread = omp_get_thread_num();
+
+	for(INT a = 0; a<l; a++)
+	{
+		final_rank[thread][a] = 0;
+		bucket->at(thread).at(rank2[thread][a] ).push_back( a ) ;
+	}
+	
+
+	INT a = 0;
+
+	for(INT b = 0; b<l; b++)
+	{
+		for( INT c = 0; c<bucket->at(thread).at(b).size(); c++)
+		{	
+			order[thread][a] = bucket->at(thread).at(b).at(c);
+			a++;
+		}
+
+		bucket->at(thread).at(b).clear();
 
 	}
 
-	return 1;
+	for(INT b = 0; b<l; b++)
+		bucket->at(thread).at( rank1[thread][order[thread][b]] ).push_back( order[thread][ b ] ) ;
+
+
+	a = 0;
+
+	for(INT b = 0; b<l; b++)
+	{
+		for( INT c = 0; c<bucket->at(thread).at(b).size(); c++)
+		{
+			order[thread][a] = bucket->at(thread).at(b).at(c);
+			a++;
+		}
+
+		bucket->at(thread).at(b).clear();
+	}
+
+	INT rank = 0;
+
+	for(INT b = 1; b<l; b++)
+	{
+		if( rank1[thread][order[thread][b]] == rank1[thread][order[thread][b-1]] && rank2[thread][order[thread][b]] == rank2[thread][order[thread][b-1]] )
+		{
+			final_rank[thread][order[thread][b]] = rank;
+		}
+		else 
+		{
+			rank = rank+1;
+			final_rank[thread][order[thread][b]] = rank ;
+		}
+	}
+
+	for(INT b = 0; b<l; b++)
+	{	
+		rank1[thread][b] = final_rank[thread][b];
+	}
+
+
+return 1;
 }
 
-INT extension( char * alphabet, INT * character, INT * error_pos, INT i, INT * SA, INT * invSA, INT * LCP, INT * PLCP, INT * P, struct TSwitch  sw, unsigned char * x, INT  error, INT * prev_errors,  INT * A)
+
+INT rmqs( INT * LCP, INT first, INT second, INT l  )
 {
-	INT error_p = error_pos[ error ];
-	INT prev_error = 0;
+	INT rmq = l;
 
-	if( error == 0 )		prev_error = i;
-	else				prev_error = prev_errors[ error - 1];
+	INT a = min( first, second);
+	INT b = max( first, second );
 
-	INT cur_err = prev_error + error_p - i;
-
-	INT n  = strlen( (char*) x );
-	INT r  = n - 1;
-
-	INT l =  0;
-        INT len_ext = 0;
-	INT search = floor( ( r + l ) / 2.0 );
-	while( r >= l )
+	for(INT i =a+1; i<=b; i++)
 	{
-	        INT rq = 0;
-		INT rq2 = 0;
-		INT pos_value = SA[search];
-		 
-		if ( invSA[prev_error] == search ) rq = n - prev_error;
-		else rq = LCP[rmq(A, LCP, n , invSA[prev_error], search )];
-		if( rq >= error_p - i ) // r - j 
-		{	
-			if( SA[search] + error_p - i == n ) binary_search ( &l, &r, &search, 1 );	//q reached end of string
-			else if( alphabet[character[error]] == x[SA[search] + error_p - i] )	//letter comparison successful
-			{
-				if( error_p<n-1 && SA[search] + error_p - i <n-1)	//RMQ allowed, else we are good, rq2=0
-				{
-					if (invSA[error_p +1] == invSA[SA[search] + error_p - i +1] ) rq2 = n - ( error_p +1 );
-					else rq2 = LCP[rmq(A, LCP, n , invSA[error_p +1], invSA[SA[search] + error_p - i +1] )];
-				}
+		if( LCP[ i ] < rmq )
+			rmq = LCP[ i ];
+	}
 
-				INT value = 0; if( SA[search] +  error_p - i + rq2 == n-1 || ( error_p + rq2 < n-1 && x[ error_p + rq2 + 1 ] > x[ SA[search] +  error_p - i + rq2 + 1 ]) ) value = 1;
-				binary_search ( &l, &r, &search, value );
-	
-				if(len_ext<error_p - i + rq2 + 1) 
-				{
-					len_ext = error_p - i+ rq2 + 1;
-					prev_errors[error]=pos_value;
-					if( len_ext > PLCP[i] && pos_value != i )
-					{
-						PLCP[i] = len_ext;
-						P[i] = pos_value;
-					}		
-				}
-			}
-			else //letter comparison unsuccessful
-			{
-			        INT value = 0; if (  alphabet[character[error]] > x[SA[search]+error_p-i]  ) value = 1;
-				binary_search ( &l, &r, &search, value );
-			}
-		}
-		else //( rq < error_p - i )
-		{	
-			INT value = 0; if ( SA[search] + rq == n || x[ prev_error + rq ] > x[SA[search] + rq]  ) value = 1;
-		        binary_search ( &l, &r, &search, value  );
-		}
-	}//end of while
-
-	return ( len_ext - error_p + i - 1 );
+return rmq;
 }
 

@@ -1,7 +1,7 @@
 /**
     PLCP
-    Copyright (C) 2017 Lorraine A.K. Ayad and Panagiotis Charalampopoulos 
-    and Costas S. Iliopoulos and Solon P. Pissis
+    Copyright (C) 2018 Lorraine A.K. Ayad and Carl Barton and Panagiotis  
+    Charalampopoulos and Costas S. Iliopoulos and Solon P. Pissis
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,10 +33,10 @@
 static struct option long_options[] =
  {
    { "input-file",              required_argument, NULL, 'i' },
-   { "output-file",           required_argument, NULL, 'o' },
-   //{ "alphabet", 		required_argument, NULL, 'a' },
+   { "output-file",             required_argument, NULL, 'o' },
    { "hamming-dist",            required_argument, NULL, 'k' },
    { "threads",                 required_argument, NULL, 't' },
+   { "rmqs",                	required_argument, NULL, 'r' },
    { "help",                    no_argument,       NULL, 'h' },
    {  NULL,                     0,                 NULL,  0  }
  };
@@ -56,22 +56,15 @@ int decode_switches ( int argc, char * argv [], struct TSwitch * sw )
    /* initialisation */
    sw -> input_filename                 = NULL;
    sw -> output_filename                = NULL;
-  // sw -> alphabet			= NULL;
    sw -> k                              = 1;
-   sw -> T                              = 1;
+   sw -> t                              = 1;
+   sw -> r                              = 0;
    args = 0;
 
-   while ( ( opt = getopt_long ( argc, argv, "i:o:k:t:h", long_options, &oi ) ) != - 1 )
+   while ( ( opt = getopt_long ( argc, argv, "i:o:k:t:r:h", long_options, &oi ) ) != - 1 )
     {
       switch ( opt )
        {
-
-	/* case 'a':
-           sw -> alphabet = ( char * ) malloc ( ( strlen ( optarg ) + 1 ) * sizeof ( char ) );
-           strcpy ( sw -> alphabet, optarg );
-           args ++;
-           break;*/
-
          case 'i':
            sw -> input_filename = ( char * ) malloc ( ( strlen ( optarg ) + 1 ) * sizeof ( char ) );
            strcpy ( sw -> input_filename, optarg );
@@ -100,7 +93,16 @@ int decode_switches ( int argc, char * argv [], struct TSwitch * sw )
             {
               return ( 0 );
             }
-           sw -> T = val;
+           sw -> t = val;
+           break;
+
+	 case 'r':
+           val = strtol ( optarg, &ep, 10 );
+           if ( optarg == ep )
+            {
+              return ( 0 );
+            }
+           sw -> r = val;
            break;
        }
     }
@@ -124,9 +126,9 @@ void usage ( void )
    fprintf ( stdout, " Mandatory arguments:\n" );
    fprintf ( stdout, "  -i, --input-file	<str>	Sequence input filename (FASTA format).\n" );
    fprintf ( stdout, "  -o, --output-file	<str>	Output filename.\n" );
- //  fprintf ( stdout, "  -a, --alphabet	        <str>	DNA or PROT.\n" );
    fprintf ( stdout, "  -k, --hamming-dist	<int>	Hamming distance between matches.\n");
    fprintf ( stdout, " Optional arguments:\n" );
+   fprintf ( stdout, "  -r, --rmqs		<int>	0 for computing rmqs using O(nlogn) space or 1 for O(n) space. (default: 0).\n");
    fprintf ( stdout, "  -t, --threads		<int>	The number of threads to be used (default: 1).\n\n");
  }
 
