@@ -36,7 +36,6 @@ static struct option long_options[] =
    { "output-file",             required_argument, NULL, 'o' },
    { "hamming-dist",            required_argument, NULL, 'k' },
    { "threads",                 required_argument, NULL, 't' },
-   { "rmqs",                	required_argument, NULL, 'r' },
    { "help",                    no_argument,       NULL, 'h' },
    {  NULL,                     0,                 NULL,  0  }
  };
@@ -61,7 +60,7 @@ int decode_switches ( int argc, char * argv [], struct TSwitch * sw )
    sw -> r                              = 0;
    args = 0;
 
-   while ( ( opt = getopt_long ( argc, argv, "i:o:k:t:r:h", long_options, &oi ) ) != - 1 )
+   while ( ( opt = getopt_long ( argc, argv, "i:o:k:t:h", long_options, &oi ) ) != - 1 )
     {
       switch ( opt )
        {
@@ -95,15 +94,6 @@ int decode_switches ( int argc, char * argv [], struct TSwitch * sw )
             }
            sw -> t = val;
            break;
-
-	 case 'r':
-           val = strtol ( optarg, &ep, 10 );
-           if ( optarg == ep )
-            {
-              return ( 0 );
-            }
-           sw -> r = val;
-           break;
        }
     }
 
@@ -128,7 +118,6 @@ void usage ( void )
    fprintf ( stdout, "  -o, --output-file	<str>	Output filename.\n" );
    fprintf ( stdout, "  -k, --hamming-dist	<int>	Hamming distance between matches.\n");
    fprintf ( stdout, " Optional arguments:\n" );
-   fprintf ( stdout, "  -r, --rmqs		<int>	0 for computing rmqs using O(nlogn) space or 1 for O(n) space. (default: 0).\n");
    fprintf ( stdout, "  -t, --threads		<int>	The number of threads to be used (default: 1).\n\n");
  }
 
