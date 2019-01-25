@@ -213,7 +213,7 @@ INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT
 
 			if( first == true ) // first time need to add everything to add rank1 else add everything to rank2
 			{
-				for(INT b = 1; b<l-1; b++)
+				for(INT b = 1; b<l; b++)
 				{
 					
 					if( order[thread][b-1] != -1 )
@@ -249,7 +249,7 @@ INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT
 			else
 			{
 				
-				for(INT b = 1; b<l-1; b++)
+				for(INT b = 1; b<l; b++)
 				{	
 					if( order[thread][b-1] != -1 )
 					{	
@@ -302,7 +302,7 @@ INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT
 	for(INT b = 0; b<l; b++)
 	{	
 		if( rank1[thread][b]-1 < 0 )
-			rank2[thread][b] ;
+			continue ;
 		else rank2[thread][rank1[thread][b]-1] = SA[b];
 	}
 
