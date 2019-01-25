@@ -345,13 +345,13 @@ INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT
 			}
 		}
 
-		if( min( total + sw.k, l - rank2[thread][c]  ) > thread_plcp[ thread  ][ rank2[thread][c] ] )
+		if( min( total + sw.k, l - rank2[thread][c]  ) >= thread_plcp[ thread  ][ rank2[thread][c] ] )
 		{
 			thread_plcp[ thread ][ rank2[thread][c] ] =  min( total + sw.k, l - rank2[thread][c] );	
 			thread_p[ omp_get_thread_num() ][ rank2[thread][c] ] = rank2[thread][c-1];
 		}
 
-		if( min( total + sw.k, l - rank2[thread][c-1]  ) > thread_plcp[ thread ][ rank2[thread][c-1] ] )
+		if( min( total + sw.k, l - rank2[thread][c-1]  ) >= thread_plcp[ thread ][ rank2[thread][c-1] ] )
 		{
 
 			thread_plcp[thread ][ rank2[thread][c-1] ] = min( total + sw.k, l - rank2[thread][c-1] );	
