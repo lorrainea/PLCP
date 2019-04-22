@@ -72,11 +72,11 @@ INT combinadic( INT n, INT k, INT i, INT ** error_pos )
 	for (INT j = 0; j < k; j++)
             	error_pos[thread][j] = n - error_pos[thread][j] - 1;
 
-return 1;
+return 0;
 }
 
 
-INT short_plcp( unsigned char * x, TSwitch sw, INT * PLCP, INT * P, INT * SA, INT * LCP, INT * invSA, INT * A, unordered_map<pair<INT, INT>, INT, pair_hash> * h_map )
+INT short_plcp( unsigned char * x, TSwitch sw, INT * PLCP, INT * P, INT * SA, INT * LCP, INT * invSA, INT * A, unordered_set< pair<INT,INT> , pair_hash > * h_map )
 {	
 	INT l = strlen( (char*) x );
 	INT nck = nchoosek( sw.m, sw.k );
@@ -119,11 +119,10 @@ INT short_plcp( unsigned char * x, TSwitch sw, INT * PLCP, INT * P, INT * SA, IN
 
 	#pragma omp parallel for	
 	for( INT i =0; i<nck; i++)
-	{
+	{	
 		combinadic( sw.m, sw.k, i, error_pos );
 		compute_plcp( l, error_pos, SA, invSA, LCP, PLCP, P, A, thread_plcp, thread_p, sw, column_lengths, start_column, order, rank1, rank2, final_rank, bucket, h_map );
 	}
-
 
 	for( INT i = 0; i<sw . t ; i++)
 	{
@@ -161,16 +160,18 @@ INT short_plcp( unsigned char * x, TSwitch sw, INT * PLCP, INT * P, INT * SA, IN
 	free( error_pos );
 	delete( bucket );
 
-return 1;
+return 0;
 }
         
 
 
 /*computing plcp for one set of error positions*/
-INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT * PLCP, INT * P, INT * A, INT ** thread_plcp, INT ** thread_p, TSwitch sw, INT ** column_lengths, INT ** start_column, INT ** order, INT ** rank1, INT ** rank2, INT ** final_rank, vector<vector<vector<INT>>> * bucket,  unordered_map<pair<INT, INT>, INT, pair_hash> * h_map   )
+INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT * PLCP, INT * P, INT * A, INT ** thread_plcp, INT ** thread_p, TSwitch sw, INT ** column_lengths, INT ** start_column, INT ** order, INT ** rank1, INT ** rank2, INT ** final_rank, vector<vector<vector<INT>>> * bucket,  unordered_set< pair<INT,INT> , pair_hash >* h_map   )
 {
 
 	INT thread = omp_get_thread_num();
+
+	unordered_set< INT  > s_map;
 
 	INT current_pos = 0 ; 
 	INT plcp = 0;
@@ -198,6 +199,8 @@ INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT
 			rank2[thread][b] = 0;
 		}
 
+
+	
 		if( column_length > 0 )
 		{			
 
@@ -209,15 +212,16 @@ INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT
 				
 			}
 			
+
+
 			INT rank = 1;
 
 			if( first == true ) // first time need to add everything to add rank1 else add everything to rank2
 			{
 				for(INT b = 1; b<l; b++)
 				{
-					
 					if( order[thread][b-1] != -1 )
-					{
+					{	
 						if( LCP[b] >= column_length )
 						{	
 							rank1[thread][order[thread][b-1]] = rank;
@@ -226,6 +230,7 @@ INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT
 						}
 						else rank1[thread][order[thread][b-1]] = rank++;
 					}
+
 				}
 
 				if( order[thread][l-1] != -1)
@@ -237,7 +242,7 @@ INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT
 					}
 					else rank1[thread][order[thread][l-1]] = rank++;
 				}
-
+		
 				first = false;
 
 				if( draw == false )	
@@ -245,6 +250,7 @@ INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT
 					a++;
 					break;
 				}
+
 			}
 			else
 			{
@@ -274,17 +280,18 @@ INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT
 					else rank2[thread][order[thread][l-1]] = rank++;
 				}
 
+
 				if( draw == false )
 				{
 					a++;
 					break;
 				}
 					
+				
 				bucket_sort_pair( rank1, rank2, l, order, final_rank, bucket, sw );
 			}
-
-			
 		}
+
 
 		errorPosCur = errorPosNxt;
 		current_pos = errorPosCur + 1;
@@ -302,8 +309,9 @@ INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT
 	for(INT b = 0; b<l; b++)
 	{	
 		if( rank1[thread][b]-1 < 0 )
-			continue ;
+			continue;
 		else rank2[thread][rank1[thread][b]-1] = SA[b];
+
 	}
 
 	for(INT c = 1; c<l; c++ )
@@ -314,6 +322,7 @@ INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT
 
 		INT total = 0;
 
+		
 		for(INT b = 0; b<a; b++) // k + 1 * n rmqs, break at a if no draws
 		{	
 			if( column_lengths[thread][b] == 0 )
@@ -321,6 +330,7 @@ INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT
 			
 			INT rq = 0;
 
+			
 
 			if( rank2[thread][c-1]+start_column[thread][b] >= l || rank2[thread][c]+start_column[thread][b] >=l )
 				rq = 0;
@@ -333,33 +343,52 @@ INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT
 				break; // rq is not equal to whole column so error is occurring at end of column
 			}
 		}
+	
 
 		if( total + sw.k  >= sw.m )
 		{
-			pair<INT, INT> toadd( rank2[thread][c], rank2[thread][c-1] );
-			unordered_map<pair<INT,INT>, INT, pair_hash>::const_iterator pos = h_map->find( toadd );
-			if( pos == h_map->end()  )
+			s_map.insert( rank2[thread][c] ); 
+			s_map.insert( rank2[thread][c-1]); 
+		}
+		else 
+		{
+			for ( unordered_set<INT>::iterator it = s_map.begin(); it != s_map.end(); it++ )
 			{
-				pair< pair<INT, INT>, INT > toadd2( toadd, 1 );
-				h_map->insert( toadd2 ); 
+				INT first = *it;
+
+				for ( unordered_set<INT>::iterator it2 = it; it2 != s_map.end(); it2++ )
+				{
+					INT second = *it2;
+
+					if( first == second ) 
+						continue;
+					
+
+					pair<INT,INT> long_pair( first, second );
+					h_map->insert( long_pair );
+
+				}
 			}
+
+			s_map.erase(s_map.begin(), s_map.end());
 		}
 
-		if( min( total + sw.k, l - rank2[thread][c]  ) >= thread_plcp[ thread  ][ rank2[thread][c] ] )
+	
+		if( min( total + sw.k, min( l - rank2[thread][c] , l - rank2[thread][c-1])  ) > thread_plcp[ thread  ][ rank2[thread][c] ] )
 		{
-			thread_plcp[ thread ][ rank2[thread][c] ] =  min( total + sw.k, l - rank2[thread][c] );	
+			thread_plcp[ thread ][ rank2[thread][c] ] =  min( total + sw.k, min( l - rank2[thread][c] , l - rank2[thread][c-1]) );
 			thread_p[ omp_get_thread_num() ][ rank2[thread][c] ] = rank2[thread][c-1];
 		}
 
-		if( min( total + sw.k, l - rank2[thread][c-1]  ) >= thread_plcp[ thread ][ rank2[thread][c-1] ] )
+		if( min( total + sw.k, min( l - rank2[thread][c] , l - rank2[thread][c-1])  ) > thread_plcp[ thread ][ rank2[thread][c-1] ] )
 		{
 
-			thread_plcp[thread ][ rank2[thread][c-1] ] = min( total + sw.k, l - rank2[thread][c-1] );	
+			thread_plcp[thread ][ rank2[thread][c-1] ] =  min( total + sw.k, min( l - rank2[thread][c] , l - rank2[thread][c-1])) ;	
 			thread_p[ thread ][ rank2[thread][c-1] ] = rank2[thread][c];
 		}
 	}
 
-return 1;
+return 0;
 }
 
 
@@ -427,11 +456,11 @@ INT bucket_sort_pair( INT ** rank1, INT ** rank2, INT l, INT ** order, INT ** fi
 	}
 
 
-return 1;
+return 0;
 }
 
 
-INT rmqs( INT * LCP, INT first, INT second, INT l  )
+/*INT rmqs( INT * LCP, INT first, INT second, INT l  )
 {
 	INT rmq = l;
 
@@ -445,5 +474,5 @@ INT rmqs( INT * LCP, INT first, INT second, INT l  )
 	}
 
 return rmq;
-}
+}*/
 

@@ -161,9 +161,9 @@ int main( int argc, char **argv )
 
 	populate_PLCP( seq, l, SA, invSA, LCP, PLCP, P );
 
-	sw . m =  ( 2.0 ) *  log( l );
+	sw . m =  ( 2.0 ) *  flog2( l );
 
-	unordered_map< pair<INT, INT>, INT,pair_hash > h_map;
+	unordered_set< pair<INT, INT> ,pair_hash > h_map;
 
 	if ( sw . k >= l )
 	{

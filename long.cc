@@ -28,54 +28,57 @@
 #include <vector>  
 #include <fstream>
 #include <sys/time.h>
-
+#include <omp.h>
 #include "plcp.h"
 
 using namespace std;
 
-INT long_plcp( unsigned char * x, struct TSwitch  sw, INT * PLCP, INT * P, INT * SA, INT * LCP, unordered_map<pair<INT, INT>, INT, pair_hash> * h_map )
+INT long_plcp( unsigned char * x, struct TSwitch  sw, INT * PLCP, INT * P, INT * SA, INT * LCP, unordered_set< pair<INT,INT> , pair_hash > * h_map )
 {	
 	INT l = strlen( (char*) x);
 
-	for( unordered_map<pair<INT, INT>, INT, pair_hash>::iterator it=h_map->begin(); it!=h_map->end(); ++it )
+	#pragma omp parallel
+	for( unordered_set<pair<INT, INT>, pair_hash>::iterator it=h_map->begin(); it!=h_map->end(); ++it )
 	{
-		INT first = it->first.first;
-		INT second = it->first.second;
-    		INT match = prefix_len( x, sw, first, second );
-
-		if( match > PLCP[first] )	
-		{
-			PLCP[first] = match;
-			P[first] = second;
-		}
-		if( match > PLCP[second] )
-		{
-			PLCP[second] =  match;
-			P[second] = first;
-		}
+		INT first = it->first;
+		INT second = it->second;	
+	
+		compute_long( PLCP, P, sw, x, first, second );
 	}
+	
 		
-return 1;
+return 0;
 }
 
-
-INT prefix_len( unsigned char * x, struct TSwitch sw, INT first, INT second )
+INT compute_long( INT * PLCP, INT * P, TSwitch sw, unsigned char * x, INT first, INT second ) 
 {
 
+	INT l = strlen( (char*) x);
+		    	
 	INT match = 0;
 	INT error = 0;
 
-	while( first+ match < strlen( (char*) x) && second + match < strlen( (char*) x) && error <= sw . k )
+	while( first + match < l && second + match < l && error <= sw . k )
 	{
 		if( x[first + match] != x[second + match] )
 		{
 			error++	;
 			
 		}
-
 		if( error <= sw . k )	
 			match++;
 	}
 
-return match;
+	if( match > PLCP[first] )	
+	{
+		PLCP[first] = match;
+		P[first] = second;
+	}
+	if( match > PLCP[second] )
+	{
+		PLCP[second] =  match;
+		P[second] = first;
+	}
+
+return 0;
 }

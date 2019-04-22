@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <math.h>
-#include <unordered_map>
+#include <unordered_set>
 
 #define ALLOC_SIZE              1048576
  
@@ -38,18 +38,38 @@ struct TSwitch
 {
     char *               input_filename;    
     char *               output_filename; 
-    INT         	 k, t, m, r;
+    INT         	 k, t, m, r, l;
+    double e;
+};
+
+struct Repeats
+{
+    INT pos1;    
+    INT pos2;
+    INT len;
+    INT del;
+};
+
+struct Long
+{
+    INT pos1;    
+    INT pos2;
 };
 
 struct pair_hash {
     template <class T1, class T2>
     std::size_t operator () (const std::pair<T1,T2> &p) const {
         auto h1 = std::hash<T1>{}(p.first);
-        auto h2 = std::hash<T2>{}(p.second);
-
+	auto h2 = std::hash<T2>{}(p.second);
         return h1 ^ h2;  
     }
 };
+
+
+
+//INT rmqs( INT * LCP, INT first, INT second, INT l );
+
+INT nchoosek( INT n, INT k );
 
 double gettime( void );
 
@@ -69,17 +89,21 @@ INT populate_PLCP( unsigned char *text, INT l, INT * SA, INT * invSA, INT * LCP,
 
 INT LCParray( unsigned char *text, INT n, INT * SA, INT * ISA, INT * LCP );
 
-INT long_plcp( unsigned char * x, TSwitch  sw, INT * PLCP, INT * P, INT * SA, INT * LCP, std::unordered_map< std::pair<INT, INT> , INT , pair_hash > * h_map  );
+INT repeats( INT * SA, INT * invSA, INT * LCP, INT * PLCP, INT * P, std::vector<Repeats> * sm_repeats, INT ell , TSwitch sw );
 
-INT short_plcp( unsigned char * x, TSwitch sw, INT * PLCP, INT * P, INT * SA, INT * LCP, INT * invSA, INT * A, std::unordered_map< std::pair<INT, INT> , INT , pair_hash > * h_map );
+INT long_plcp( unsigned char * x, TSwitch  sw, INT * PLCP, INT * P, INT * SA, INT * LCP, std::unordered_set< std::pair<INT,INT> , pair_hash > * h_map  );
 
-INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT * PLCP, INT * P, INT * A, INT ** thread_plcp, INT ** thread_p, TSwitch sw, INT ** column_lengths, INT ** start_column, INT ** order, INT ** rank1, INT ** rank2, INT ** final_rank,  std::vector<std::vector<std::vector<INT>>> * bucket,  std::unordered_map<std::pair<INT, INT>, INT, pair_hash> * h_map   );
+INT compute_long( INT * PLCP, INT * P, TSwitch sw, unsigned char * x, INT first, INT second )  ;
+
+INT short_plcp( unsigned char * x, TSwitch sw, INT * PLCP, INT * P, INT * SA, INT * LCP, INT * invSA, INT * A, std::unordered_set< std::pair<INT,INT> , pair_hash > * h_map );
+
+INT compute_plcp( INT l, INT ** error_pos, INT * SA, INT * invSA, INT * LCP, INT * PLCP, INT * P, INT * A, INT ** thread_plcp, INT ** thread_p, TSwitch sw, INT ** column_lengths, INT ** start_column, INT ** order, INT ** rank1, INT ** rank2, INT ** final_rank,  std::vector<std::vector<std::vector<INT>>> * bucket,  std::unordered_set< std::pair<INT,INT> , pair_hash > * h_map   );
 
 INT bucket_sort_pair(INT ** rank1, INT ** rank2, INT l, INT ** order, INT ** final_rank,  std::vector<std::vector<std::vector<INT>>> * bucket, TSwitch sw );
 
-INT rmqs( INT * LCP, INT first, INT second, INT l );
 
-INT prefix_len( unsigned char * x, struct TSwitch sw, INT first, INT second );
+
+//INT prefix_len( unsigned char * x, struct TSwitch sw, INT first, INT second );
 
 static __inline void  binary_search ( INT * left, INT * right, INT * key, INT value )
 {
