@@ -3,11 +3,12 @@ Longest Common Prefixes with k-errors
 
 <b>Description</b>: Given an input sequence x in FATSA format and an integer value k, PLCP is a program that computes for each index i of x, the longest prefix of x[i] that exists at position j in x with k mismatches.
 
+<b>Installation</b>: To compile plcp, please follow the instructions given in file INSTALL.
+
 <b>INPUT</b>: A single sequence in FASTA format.
 
 <b>OUTPUT</b>: Array PLCP[i] which holds the the longest prefix of x[i] that exists at position j in x with k mismatches and array P[i]=j.
 
-<b>Installation</b>: To compile plcp, please follow the instructions given in file INSTALL.
 ```
  plcp <options>
  Mandatory arguments:
